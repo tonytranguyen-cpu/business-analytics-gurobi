@@ -1,0 +1,149 @@
+mysql> source solution1(1).sql; 
+--------------
+/*
+Your implementation must directly follow a comment with the specifications of a subtask.
+*/
+
+/*
+Implement SQL nested query statements for questions (1), (2) and (3) below.
+*/
+
+/*
+(1)  Find the buyer’s phone numbers and the names of all buyers who have at least 2 preferences.
+*/
+SELECT BPhoneNumber, name
+FROM BUYER 
+WHERE BPhoneNumber IN (
+      SELECT BPhoneNumber 
+      FROM PREFERENCE
+      GROUP BY BPhoneNumber 
+      HAVING COUNT(*) >= 2
+)
+--------------
+
++--------------+--------------+
+| BPhoneNumber | name         |
++--------------+--------------+
+|     12345678 | Harry Potter |
+|     12345789 | Mike Jackson |
+|     12345793 | Bob Smith    |
+|     12345796 | Peter Higgs  |
++--------------+--------------+
+4 rows in set (0.00 sec)
+
+--------------
+      
+
+
+
+
+/*
+(2)	Find the buyer’s phone numbers and the names of all buyers who have inspected the property (PNumber = 3).  
+*/
+
+SELECT BPhoneNumber, name
+FROM BUYER
+WHERE BPhoneNumber IN ( 
+      SELECT BPhoneNumber
+      FROM INSPECTION
+      WHERE PNumber = 3
+)
+--------------
+
++--------------+---------------+
+| BPhoneNumber | name          |
++--------------+---------------+
+|     12345678 | Harry Potter  |
+|     12345690 | Neil Superman |
++--------------+---------------+
+2 rows in set (0.00 sec)
+
+--------------
+/*
+(3)  Find the owner’s phone numbers and the names of all owners who don’t have properties.
+     Sort the outputs by the owner names in ascending order.
+*/
+
+SELECT OPhoneNumber, OName
+FROM OWNER 
+WHERE OPhoneNumber NOT IN (
+      SELECT OPhoneNumber 
+      FROM PROPERTY
+)
+ORDER BY OName ASC
+--------------
+
++--------------+----------------------+
+| OPhoneNumber | OName                |
++--------------+----------------------+
+|     12345679 | Johnny Walker        |
+|     12345694 | Richard Thelionheart |
+|     12345696 | Robin Hood           |
+|     12345697 | Sara Wu              |
+|     12345695 | Sherlock Holmes      |
++--------------+----------------------+
+5 rows in set (0.00 sec)
+
+--------------
+/*
+Implement SQL correlated nested query statements for questions (4) and (5) below.
+*/
+
+
+/*
+(4) Find the owner’s phone numbers and the names of all owners who don’t have properties.
+	Sort the outputs by the owner names in ascending order.
+*/
+SELECT OPhoneNumber, Oname
+FROM OWNER 
+WHERE NOT EXISTS (
+    SELECT *
+    FROM PROPERTY 
+    WHERE PROPERTY.OPhoneNumber = OWNER.OPhoneNumber
+)
+ORDER BY OName ASC
+--------------
+
++--------------+----------------------+
+| OPhoneNumber | Oname                |
++--------------+----------------------+
+|     12345679 | Johnny Walker        |
+|     12345694 | Richard Thelionheart |
+|     12345696 | Robin Hood           |
+|     12345697 | Sara Wu              |
+|     12345695 | Sherlock Holmes      |
++--------------+----------------------+
+5 rows in set (0.00 sec)
+
+--------------
+/*
+(5) Find the buyer’s phone numbers of all buyers who have properties satisfying their preferences.
+	A buyer prefers a property if the property is located in the same city and street as preferred by the buyer, and the price is in the range of the preferred minimum and maximum prices.
+    Note that the minimum price is 0 if it is NULL, and the maximum price is the maximum value (9999999.99) if it is NULL.
+
+*/
+SELECT DISTINCT BPhoneNumber
+FROM PREFERENCE 
+WHERE EXISTS (
+    SELECT *
+    FROM PROPERTY 
+      WHERE PROPERTY.city = PREFERENCE.PCity
+      AND PROPERTY.street = PREFERENCE.PStreet
+      AND PROPERTY.price >= IFNULL(PREFERENCE.minPrice, 0) 
+      AND PROPERTY.price <= IFNULL(PREFERENCE.maxPrice, 9999999.99)
+)
+--------------
+
++--------------+
+| BPhoneNumber |
++--------------+
+|     12345678 |
+|     12345679 |
+|     12345688 |
+|     12345789 |
+|     12345790 |
+|     12345796 |
++--------------+
+6 rows in set (0.00 sec)
+
+mysql> notee

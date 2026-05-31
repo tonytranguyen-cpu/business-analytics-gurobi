@@ -1,0 +1,90 @@
+mysql> source solution3.sql
+--------------
+/*
+Your implementation must directly follow a comment with a specification of a subtask.
+*/
+
+/*
+(1) Creates two new users: [your-UOW-email]_1 and [your-UOW-email]_2. The passwords are up to you.
+
+For example, if your UOW email account is abc001@uow.edu.au, then the first user is abc001_1, and the second user is abc001_2.
+*/
+
+
+CREATE USER 'ntt607_1'@'localhost' IDENTIFIED BY 'password123'
+--------------
+
+Query OK, 0 rows affected (0.01 sec)
+
+--------------
+CREATE USER 'ntt607_2'@'localhost' IDENTIFIED BY 'password123'
+--------------
+
+Query OK, 0 rows affected (0.01 sec)
+
+--------------
+/*
+(2) Grant the read and write privileges on relational tables PROPERTY in the database csit115 to the first user who has been created in (1). 
+The first user is not allowed to propagate the privileges to the other roles or users.
+*/
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON csit115.PROPERTY TO 'ntt607_1'@'localhost'
+--------------
+
+Query OK, 0 rows affected (0.01 sec)
+
+--------------
+/*
+(3) Grant the read privileges on the relational table PREFERENCE in the database csit115 to the second user who has been created in (1). 
+The privileges must be granted such that the second user can propagate the same privileges to other roles or users.
+*/
+
+GRANT SELECT ON csit115.PREFERENCE TO 'ntt607_2'@'localhost' WITH GRANT OPTION
+--------------
+
+Query OK, 0 rows affected (0.01 sec)
+
+--------------
+/*
+(4) Grant the read privileges on the information of property number, city, street and price of PROPERTY in the database csit115 to the second user who has been created in (1). 
+The privileges must be granted such that the second user can grant the same privileges to other roles or users.
+*/
+
+GRANT SELECT(PNumber, city, street, price) ON csit115.PROPERTY TO 'ntt607_2'@'localhost' WITH GRANT OPTION
+--------------
+
+Query OK, 0 rows affected (0.00 sec)
+
+--------------
+/*
+(5) Grant the read privileges on the information of buyer phone number, name, city, street, minimum price and maximum price of preference properties, 
+to the second user who has been created in (1). 
+The privileges must be granted such that the second user can propagate the same privileges to other roles or users.
+*/
+
+GRANT SELECT(BPhoneNumber, PCity, PStreet, minPrice, maxPrice) ON csit115.PREFERENCE TO 'ntt607_2'@'localhost' WITH GRANT OPTION
+--------------
+
+Query OK, 0 rows affected (0.01 sec)
+
+--------------
+/*
+(Optional)
+Drop users who have been created in (1).
+*/
+
+DROP USER 'ntt607_1'@'localhost', 'ntt607_2'@'localhost'
+--------------
+
+Query OK, 0 rows affected (0.02 sec)
+
+--------------
+/*
+(Optional)
+Drop the view that created in (5)
+*/
+--------------
+
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> notee

@@ -1,0 +1,264 @@
+mysql> source solution2.sql
+--------------
+/* 
+Your implementation must directly follow a comment with the specifications of a subtask.
+*/
+
+/*
+(1) Implement SELECT statements in a WITH clause for the query below.
+
+    Find the buyer’s phone numbers and names of all buyers who have properties in Wollongong that satisfy their preferences.
+	A buyer prefers a property if the property is located in the same city and street as preferred by the buyer, and the price is in the range of the preferred minimum and maximum prices.
+    Note that the minimum price is 0 if it is NULL, and the maximum price is the maximum value (9999999.99) if it is NULL.
+
+    You must implement at least 2 subqueries in the WITH clause for this question.
+*/
+
+
+WITH WOLLONGONG_PROP AS (
+    SELECT PNumber, city, street, price
+    FROM PROPERTY
+    WHERE city = 'Wollongong'
+),
+MATCHED_PREF AS (
+    SELECT DISTINCT P.BPhoneNumber
+    FROM PREFERENCE P JOIN WOLLONGONG_PROP WP 
+      ON WP.city = P.PCity 
+     AND WP.street = P.PStreet
+    WHERE WP.price >= IFNULL(P.minPrice, 0)
+      AND WP.price <= IFNULL(P.maxPrice, 9999999.99)
+)
+SELECT B.BPhoneNumber, B.name
+FROM BUYER B JOIN MATCHED_PREF MP 
+  ON B.BPhoneNumber = MP.BPhoneNumber
+--------------
+
++--------------+-----------------+
+| BPhoneNumber | name            |
++--------------+-----------------+
+|     12345678 | Harry Potter    |
+|     12345679 | Johnny Walker   |
+|     12345688 | George Thefirst |
+|     12345789 | Mike Jackson    |
+|     12345790 | Albert Einstein |
+|     12345796 | Peter Higgs     |
++--------------+-----------------+
+6 rows in set (0.00 sec)
+
+--------------
+/* 
+(2)	Use relational views to implement the questions below. 
+
+    Find the owner’s phone numbers and names of all owners who have properties in Wollongong that are preferred.
+	A buyer prefers a property if the property is located in the same city and street as preferred by the buyer, and the price is in the range of the preferred minimum and maximum prices.
+    Note that the minimum price is 0 if it is NULL, and the maximum price is the maximum value (9999999.99) if it is NULL.
+
+    You must create at least 2 views to implement the query above.
+*/
+
+CREATE VIEW VIEW_PREFERRED_PROP AS
+SELECT DISTINCT PR.PNumber, PR.OPhoneNumber, PR.city
+FROM PROPERTY PR JOIN PREFERENCE P 
+  ON PR.city = P.PCity 
+ AND PR.street = P.PStreet
+WHERE PR.price >= IFNULL(P.minPrice, 0)
+  AND PR.price <= IFNULL(P.maxPrice, 9999999.99)
+--------------
+
+Query OK, 0 rows affected (0.01 sec)
+
+--------------
+CREATE VIEW VIEW_WOLLONGONG_OWNERS AS
+SELECT DISTINCT O.OPhoneNumber, O.OName
+FROM OWNER O JOIN VIEW_PREFERRED_PROP VPP 
+  ON O.OPhoneNumber = VPP.OPhoneNumber
+WHERE VPP.city = 'Wollongong'
+--------------
+
+Query OK, 0 rows affected (0.01 sec)
+
+--------------
+SELECT * FROM VIEW_WOLLONGONG_OWNERS
+--------------
+
++--------------+------------------+
+| OPhoneNumber | OName            |
++--------------+------------------+
+|     12345688 | George Thefirst  |
+|     12345687 | John Spiderman   |
+|     12345691 | Ivan Theterrible |
++--------------+------------------+
+3 rows in set (0.00 sec)
+
+--------------
+/*
+Next, drop the views that were created for this question.
+*/
+ 
+
+DROP VIEW VIEW_WOLLONGONG_OWNERS
+--------------
+
+Query OK, 0 rows affected (0.02 sec)
+
+--------------
+DROP VIEW VIEW_PREFERRED_PROP
+--------------
+
+Query OK, 0 rows affected (0.02 sec)
+
+--------------
+/*
+(3) Implement the questions below by using the advanced DDL and other required statements.
+
+Create a relational table named OwnerProperties and insert information for each owner, including their phone number, name, the total number and total price of properties owned by each owner, including owners who have no properties.
+
+Note that you must create the relational table OwnerProperties and insert information into the table by using one advanced DDL statement.
+*/
+
+
+CREATE TABLE OwnerProperties AS
+SELECT O.OPhoneNumber, O.OName, 
+       COUNT(P.PNumber) AS TotalProperties, 
+       IFNULL(SUM(P.price), 0) AS TotalPrice
+FROM OWNER O LEFT JOIN PROPERTY P 
+  ON O.OPhoneNumber = P.OPhoneNumber
+GROUP BY O.OPhoneNumber, O.OName
+--------------
+
+Query OK, 20 rows affected (0.04 sec)
+Records: 20  Duplicates: 0  Warnings: 0
+
+--------------
+/*
+Next, define the primary key (owner phone number) and the foreign keys (owner phone number) for the relational table OwnerProperties.
+*/
+
+
+ALTER TABLE OwnerProperties ADD CONSTRAINT OwnerProperties_PK PRIMARY KEY (OPhoneNumber)
+--------------
+
+Query OK, 0 rows affected (0.09 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+--------------
+ALTER TABLE OwnerProperties ADD CONSTRAINT OwnerProperties_FK FOREIGN KEY (OPhoneNumber) REFERENCES OWNER(OPhoneNumber)
+--------------
+
+Query OK, 20 rows affected (0.10 sec)
+Records: 20  Duplicates: 0  Warnings: 0
+
+--------------
+/*
+Next, display all information from the table OwnerProperties in the ascending order of owner names.
+*/
+
+
+SELECT * FROM OwnerProperties
+ORDER BY OName ASC
+--------------
+
++--------------+----------------------+-----------------+------------+
+| OPhoneNumber | OName                | TotalProperties | TotalPrice |
++--------------+----------------------+-----------------+------------+
+|     12345683 | Claudia Kowalewski   |               2 | 1500000.00 |
+|     12345688 | George Thefirst      |               1 |  750000.00 |
+|     12345678 | Harry Potter         |               4 | 3550000.00 |
+|     12345689 | Homer Simpson        |               1 |  950000.00 |
+|     12345691 | Ivan Theterrible     |               2 | 1730000.00 |
+|     12345684 | James Bond           |               2 | 1700000.00 |
+|     12345687 | John Spiderman       |               2 | 1540000.00 |
+|     12345679 | Johnny Walker        |               0 |       0.00 |
+|     12345686 | Joseph Staunton      |               3 | 2500000.00 |
+|     12345682 | Margaret Finch       |               2 | 1720000.00 |
+|     12345680 | Mary Poppins         |               1 |  750000.00 |
+|     12345681 | Michael Collins      |               1 |  850000.00 |
+|     12345690 | Neil Superman        |               2 | 2000000.00 |
+|     12345692 | Penelope Princess    |               3 | 2730000.00 |
+|     12345694 | Richard Thelionheart |               0 |       0.00 |
+|     12345696 | Robin Hood           |               0 |       0.00 |
+|     12345697 | Sara Wu              |               0 |       0.00 |
+|     12345695 | Sherlock Holmes      |               0 |       0.00 |
+|     12345685 | Stephen Staunton     |               1 |  750000.00 |
+|     12345693 | Zhi Chao Zhong       |               1 |  950000.00 |
++--------------+----------------------+-----------------+------------+
+20 rows in set (0.00 sec)
+
+--------------
+/*
+Finally, drop the relational table OwnerProperties that was created.
+*/
+
+
+DROP TABLE OwnerProperties
+--------------
+
+Query OK, 0 rows affected (0.02 sec)
+
+--------------
+/*
+(4)	Implement the questions below by using the advanced DML and query statements.
+
+Increase the price by 1% for the properties which are preferred.
+If a property is in the same city and street as preferred by any buyers, and the price is in the range of the preferred minimum and maximum prices.
+
+Note that the minimum price is 0 if it is NULL, and the maximum price is the maximum value (9999999.99) if it is NULL.
+*/
+
+UPDATE PROPERTY
+SET price = price * 1.01
+WHERE PNumber IN (
+    SELECT temp.PNumber FROM (
+        SELECT DISTINCT PR.PNumber
+        FROM PROPERTY PR JOIN PREFERENCE P 
+          ON PR.city = P.PCity 
+         AND PR.street = P.PStreet
+        WHERE PR.price >= IFNULL(P.minPrice, 0)
+          AND PR.price <= IFNULL(P.maxPrice, 9999999.99)
+    ) AS temp
+)
+--------------
+
+Query OK, 3 rows affected (0.01 sec)
+Rows matched: 3  Changed: 3  Warnings: 0
+
+--------------
+/*
+Display the property number, city, street and price for the properties that are preferred.
+*/
+
+SELECT DISTINCT PR.PNumber, PR.city, PR.street, PR.price
+FROM PROPERTY PR JOIN PREFERENCE P 
+  ON PR.city = P.PCity 
+ AND PR.street = P.PStreet
+WHERE PR.price >= IFNULL(P.minPrice, 0)
+  AND PR.price <= IFNULL(P.maxPrice, 9999999.99)
+--------------
+
++---------+------------+---------------+-----------+
+| PNumber | city       | street        | price     |
++---------+------------+---------------+-----------+
+|      15 | Wollongong | Marlo street  | 757500.00 |
+|      27 | Wollongong | Ocean street  | 898900.00 |
+|      19 | Wollongong | Uralba street | 959500.00 |
++---------+------------+---------------+-----------+
+3 rows in set (0.00 sec)
+
+--------------
+/*
+(5) Implement the questions below by using the advanced DML statements.
+
+Remove the owners from the database who haven’t owned any properties.
+*/
+
+
+DELETE FROM OWNER
+WHERE OPhoneNumber NOT IN (
+    SELECT DISTINCT OPhoneNumber 
+    FROM PROPERTY
+)
+--------------
+
+Query OK, 5 rows affected (0.01 sec)
+
+mysql> notee
